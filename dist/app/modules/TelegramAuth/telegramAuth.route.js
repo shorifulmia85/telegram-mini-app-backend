@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TelegramAuthRoutes = void 0;
+const express_1 = require("express");
+const telegramAuth_controller_1 = require("./telegramAuth.controller");
+const checkAuth_1 = require("../../middlewares/checkAuth");
+const telegramAuth_interface_1 = require("./telegramAuth.interface");
+const router = (0, express_1.Router)();
+router.get("/me", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole === null || telegramAuth_interface_1.UserRole === void 0 ? void 0 : telegramAuth_interface_1.UserRole.USER, telegramAuth_interface_1.UserRole.ADMIN, telegramAuth_interface_1.UserRole.SUPER_ADMIN), telegramAuth_controller_1.telegramAuthController.getMe);
+router.post("/auth", telegramAuth_controller_1.telegramAuthController.createUserOrLogin);
+exports.TelegramAuthRoutes = router;

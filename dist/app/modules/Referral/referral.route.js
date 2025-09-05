@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ReferralRoutes = void 0;
+const express_1 = require("express");
+const referral_controller_1 = require("./referral.controller");
+const checkAuth_1 = require("../../middlewares/checkAuth");
+const telegramAuth_interface_1 = require("../TelegramAuth/telegramAuth.interface");
+const router = (0, express_1.Router)();
+router.get("/my-referrals", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.USER), referral_controller_1.referralController.getMyReferrals);
+router.get("/all-referrals", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.ADMIN, telegramAuth_interface_1.UserRole.SUPER_ADMIN), referral_controller_1.referralController.getAllReferrals);
+router.get("/leaderboard", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.USER, telegramAuth_interface_1.UserRole.ADMIN, telegramAuth_interface_1.UserRole.SUPER_ADMIN), referral_controller_1.referralController.leaderboard);
+router.post("/unlocked/:id", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.USER), referral_controller_1.referralController.referralUnlocked);
+exports.ReferralRoutes = router;

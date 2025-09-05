@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TaskCompletedRoutes = void 0;
+const express_1 = require("express");
+const checkAuth_1 = require("../../middlewares/checkAuth");
+const telegramAuth_interface_1 = require("../TelegramAuth/telegramAuth.interface");
+const completeTask_controller_1 = require("./completeTask.controller");
+const router = (0, express_1.Router)();
+router.post("/:id", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.USER), completeTask_controller_1.taskCompletedController.taskCompleted);
+exports.TaskCompletedRoutes = router;
