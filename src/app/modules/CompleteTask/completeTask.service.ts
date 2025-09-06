@@ -34,7 +34,6 @@ const taskCompleted = async (id: string, user: JwtPayload) => {
     lastAt: { $gte: startUtc, $lte: endUtc },
   });
 
-  console.log(completed);
   if (completed?.count === taskData?.perUserCap) {
     throw new AppError(StatusCodes.BAD_REQUEST, "Today limit reached");
   }
