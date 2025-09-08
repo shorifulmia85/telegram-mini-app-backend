@@ -27,7 +27,7 @@ const referralUnlocked = (referralId, authUser) => __awaiter(void 0, void 0, voi
     const session = yield mongoose_1.default.startSession();
     try {
         return yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c;
+            var _a, _b;
             // 1) auth user exists?
             const referrer = yield telegramAuth_model_1.User.findById(authUser === null || authUser === void 0 ? void 0 : authUser._id).session(session);
             if (!referrer) {
@@ -44,11 +44,7 @@ const referralUnlocked = (referralId, authUser) => __awaiter(void 0, void 0, voi
             }
             // 4) idempotency
             if (ref.status === (referral_model_1.ReferralStatus === null || referral_model_1.ReferralStatus === void 0 ? void 0 : referral_model_1.ReferralStatus.UNLOCKED)) {
-                return {
-                    ok: true,
-                    alreadyUnlocked: true,
-                    amount: (_a = ref.unlockedAmount) !== null && _a !== void 0 ? _a : ref.lockedAmount,
-                };
+                throw new appErrors_1.AppError(http_status_codes_1.StatusCodes.BAD_REQUEST, "Already claimed");
             }
             if (ref.status === (referral_model_1.ReferralStatus === null || referral_model_1.ReferralStatus === void 0 ? void 0 : referral_model_1.ReferralStatus.REJECTED)) {
                 throw new appErrors_1.AppError(http_status_codes_1.StatusCodes.BAD_REQUEST, "referral rejected");
@@ -62,7 +58,7 @@ const referralUnlocked = (referralId, authUser) => __awaiter(void 0, void 0, voi
             yield (0, IsUserExits_1.checkUserIsValid)("_id", referred._id);
             // 6) eligibility check (আপনার বিজনেস রুল)
             // উদাহরণ: referred.balance >= lockedAmount  (আপনি যেমন লিখেছিলেন)
-            const okActivity = ((_b = referred.balance) !== null && _b !== void 0 ? _b : 0) >= ((_c = ref.lockedAmount) !== null && _c !== void 0 ? _c : 0);
+            const okActivity = ((_a = referred.balance) !== null && _a !== void 0 ? _a : 0) >= ((_b = ref.lockedAmount) !== null && _b !== void 0 ? _b : 0);
             if (!okActivity) {
                 throw new appErrors_1.AppError(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE, "not eligible yet");
             }
@@ -71,6 +67,7 @@ const referralUnlocked = (referralId, authUser) => __awaiter(void 0, void 0, voi
                 $inc: {
                     balance: ref.lockedAmount,
                     lifeTimeBalance: ref.lockedAmount,
+                    referIncome: ref === null || ref === void 0 ? void 0 : ref.lockedAmount,
                 },
             }, { session });
             // 8) mark referral unlocked
@@ -86,20 +83,52 @@ const referralUnlocked = (referralId, authUser) => __awaiter(void 0, void 0, voi
     }
 });
 const getMyReferrals = (user, query) => __awaiter(void 0, void 0, void 0, function* () {
-    const IsUserExits = yield telegramAuth_model_1.User.findById(user === null || user === void 0 ? void 0 : user._id);
-    if (!IsUserExits) {
+    const me = yield telegramAuth_model_1.User.findById(user === null || user === void 0 ? void 0 : user._id).lean();
+    if (!me)
         throw new appErrors_1.AppError(http_status_codes_1.StatusCodes.NOT_FOUND, "user not found");
-    }
-    const queryBuilder = new queryBuilder_1.QueryBuilder(referral_model_1.Referral.find({ referrerId: user === null || user === void 0 ? void 0 : user._id }), query);
-    const referralData = queryBuilder.filter().sort().paginate();
-    const [data, meta] = yield Promise.all([
-        referralData.build(),
-        queryBuilder.getMeta(),
-    ]);
-    return {
-        data,
-        meta,
-    };
+    // চাইলে Referral ডক থেকে কোন কোন ফিল্ড নেবেন তা select() দিয়ে সীমিত করুন
+    const baseQuery = referral_model_1.Referral.find({ referrerId: user === null || user === void 0 ? void 0 : user._id })
+        .select("_id referrerId referredId status lockedAmount unlockedAmount createdAt updatedAt ")
+        .populate({
+        path: "referredId",
+        model: "User",
+        select: "firstName lastName photo balance",
+    });
+    const qb = new queryBuilder_1.QueryBuilder(baseQuery, query);
+    const built = qb.filter().sort().build().lean();
+    const [data, meta] = yield Promise.all([built.exec(), qb.getMeta()]);
+    //  Referral ডক + populated user info একসাথে রিটার্ন
+    const shaped = data.map((doc) => {
+        var _a, _b, _c, _d, _e, _f;
+        const ref = doc.referredId;
+        const referred = ref && typeof ref === "object" && "_id" in ref
+            ? {
+                _id: ref._id,
+                firstName: (_a = ref.firstName) !== null && _a !== void 0 ? _a : null,
+                lastName: (_b = ref.lastName) !== null && _b !== void 0 ? _b : null,
+                photo: (_c = ref.photo) !== null && _c !== void 0 ? _c : null,
+                balance: (_d = ref.balance) !== null && _d !== void 0 ? _d : null,
+            }
+            : {
+                _id: ref !== null && ref !== void 0 ? ref : null,
+                firstName: null,
+                lastName: null,
+                photo: null,
+                balance: null,
+            };
+        return {
+            _id: doc._id,
+            referrerId: doc.referrerId,
+            status: doc.status,
+            createdAt: doc.createdAt,
+            updatedAt: doc.updatedAt,
+            lockedAmount: (_e = doc.lockedAmount) !== null && _e !== void 0 ? _e : null,
+            unlockedAmount: (_f = doc.unlockedAmount) !== null && _f !== void 0 ? _f : null,
+            //  Referred user info
+            referred,
+        };
+    });
+    return { data: shaped, meta };
 });
 const getAllReferrals = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const queryBuilder = new queryBuilder_1.QueryBuilder(referral_model_1.Referral.find(), query);

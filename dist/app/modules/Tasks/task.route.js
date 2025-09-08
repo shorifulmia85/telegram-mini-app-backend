@@ -10,7 +10,7 @@ const task_validation_1 = require("./task.validation");
 const router = (0, express_1.Router)();
 router.get("/", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.USER, telegramAuth_interface_1.UserRole.ADMIN, telegramAuth_interface_1.UserRole.SUPER_ADMIN), task_controller_1.taskController.getAllTask);
 router.get("/my-task", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.USER, telegramAuth_interface_1.UserRole.ADMIN, telegramAuth_interface_1.UserRole.SUPER_ADMIN), task_controller_1.taskController.getMyTask);
-router.post("/create", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.ADMIN, telegramAuth_interface_1.UserRole.SUPER_ADMIN, telegramAuth_interface_1.UserRole.USER), (0, validateRequest_1.validateRequest)(task_validation_1.TaskCreateSchema), task_controller_1.taskController.createTask);
+router.post("/create", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.ADMIN, telegramAuth_interface_1.UserRole.SUPER_ADMIN), (0, validateRequest_1.validateRequest)(task_validation_1.TaskCreateSchema), task_controller_1.taskController.createTask);
 router.patch("/:id", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.ADMIN, telegramAuth_interface_1.UserRole.SUPER_ADMIN), (0, validateRequest_1.validateRequest)(task_validation_1.TaskUpdateSchema), task_controller_1.taskController.updateTask);
 router.delete("/:id", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.ADMIN, telegramAuth_interface_1.UserRole.SUPER_ADMIN), task_controller_1.taskController.deleteTask);
 exports.TaskRoutes = router;

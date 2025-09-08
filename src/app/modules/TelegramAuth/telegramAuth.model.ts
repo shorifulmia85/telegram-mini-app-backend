@@ -25,6 +25,7 @@ const userSchema = new Schema<IAuthUser>(
     referCode: { type: String, required: true },
     referLink: { type: String, required: true },
     balance: { type: Number, default: 0 },
+    referIncome: { type: Number, default: 0 },
     lifeTimeBalance: { type: Number, default: 0 },
     isDeleted: { type: Boolean, default: false },
     referred_by: {

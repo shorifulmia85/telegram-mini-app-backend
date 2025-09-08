@@ -14,6 +14,7 @@ export interface IAuthUser {
   role: UserRole;
   status: IAuthStatus;
   balance: number;
+  referIncome: number;
   lifeTimeBalance: number;
   referLink: string;
   isDeleted?: boolean;

@@ -15,6 +15,7 @@ const taskCompleteSchema = new Schema<ITaskComplete>(
       required: true,
       index: true,
     },
+    dayKey: { type: String, required: true },
     count: { type: Number, default: 0 },
     lastAt: { type: Date, default: null },
   },
@@ -22,6 +23,7 @@ const taskCompleteSchema = new Schema<ITaskComplete>(
 );
 
 taskCompleteSchema.index({ userId: 1, taskId: 1 }, { unique: true });
+taskCompleteSchema.index({ userId: 1, taskId: 1, dayKey: 1 }, { unique: true });
 
 export const CompleteTask = model<ITaskComplete>(
   "CompleteTask",

@@ -9,7 +9,7 @@ import { checkUserIsValid } from "../../ulits/IsUserExits";
 import { QueryBuilder } from "../../ulits/queryBuilder";
 import { referralSearchableField } from "./referral.constant";
 import { UserRole } from "../TelegramAuth/telegramAuth.interface";
-import { PipelineStage } from "mongoose";
+import { ReferralLean } from "./referral.interface";
 
 const referralUnlocked = async (referralId: string, authUser: JwtPayload) => {
   const session = await mongoose.startSession();
@@ -35,11 +35,7 @@ const referralUnlocked = async (referralId: string, authUser: JwtPayload) => {
 
       // 4) idempotency
       if (ref.status === ReferralStatus?.UNLOCKED) {
-        return {
-          ok: true,
-          alreadyUnlocked: true,
-          amount: ref.unlockedAmount ?? ref.lockedAmount,
-        };
+        throw new AppError(StatusCodes.BAD_REQUEST, "Already claimed");
       }
       if (ref.status === ReferralStatus?.REJECTED) {
         throw new AppError(StatusCodes.BAD_REQUEST, "referral rejected");
@@ -67,6 +63,7 @@ const referralUnlocked = async (referralId: string, authUser: JwtPayload) => {
           $inc: {
             balance: ref.lockedAmount,
             lifeTimeBalance: ref.lockedAmount,
+            referIncome: ref?.lockedAmount,
           },
         },
         { session }
@@ -89,26 +86,60 @@ const getMyReferrals = async (
   user: JwtPayload,
   query: Record<string, string>
 ) => {
-  const IsUserExits = await User.findById(user?._id);
-  if (!IsUserExits) {
-    throw new AppError(StatusCodes.NOT_FOUND, "user not found");
-  }
+  const me = await User.findById(user?._id).lean();
+  if (!me) throw new AppError(StatusCodes.NOT_FOUND, "user not found");
 
-  const queryBuilder = new QueryBuilder(
-    Referral.find({ referrerId: user?._id }),
-    query
-  );
-  const referralData = queryBuilder.filter().sort().paginate();
+  // চাইলে Referral ডক থেকে কোন কোন ফিল্ড নেবেন তা select() দিয়ে সীমিত করুন
+  const baseQuery = Referral.find({ referrerId: user?._id })
+    .select(
+      "_id referrerId referredId status lockedAmount unlockedAmount createdAt updatedAt "
+    )
+    .populate({
+      path: "referredId",
+      model: "User",
+      select: "firstName lastName photo balance",
+    });
 
-  const [data, meta] = await Promise.all([
-    referralData.build(),
-    queryBuilder.getMeta(),
-  ]);
+  const qb = new QueryBuilder(baseQuery, query);
+  const built = qb.filter().sort().build().lean<ReferralLean[]>();
 
-  return {
-    data,
-    meta,
-  };
+  const [data, meta] = await Promise.all([built.exec(), qb.getMeta()]);
+
+  //  Referral ডক + populated user info একসাথে রিটার্ন
+  const shaped = data.map((doc) => {
+    const ref: any = doc.referredId;
+    const referred =
+      ref && typeof ref === "object" && "_id" in ref
+        ? {
+            _id: ref._id,
+            firstName: ref.firstName ?? null,
+            lastName: ref.lastName ?? null,
+            photo: ref.photo ?? null,
+            balance: ref.balance ?? null,
+          }
+        : {
+            _id: ref ?? null,
+            firstName: null,
+            lastName: null,
+            photo: null,
+            balance: null,
+          };
+
+    return {
+      _id: doc._id,
+      referrerId: doc.referrerId,
+      status: doc.status,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      lockedAmount: doc.lockedAmount ?? null,
+      unlockedAmount: doc.unlockedAmount ?? null,
+
+      //  Referred user info
+      referred,
+    };
+  });
+
+  return { data: shaped, meta };
 };
 
 const getAllReferrals = async (query: Record<string, string>) => {

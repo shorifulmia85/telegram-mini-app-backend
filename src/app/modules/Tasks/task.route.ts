@@ -18,7 +18,7 @@ router.get(
 );
 router.post(
   "/create",
-  checkAuth(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.USER),
+  checkAuth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
   validateRequest(TaskCreateSchema),
   taskController.createTask
 );

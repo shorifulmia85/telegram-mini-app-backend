@@ -6,6 +6,7 @@ const telegramAuth_route_1 = require("../modules/TelegramAuth/telegramAuth.route
 const referral_route_1 = require("../modules/Referral/referral.route");
 const task_route_1 = require("../modules/Tasks/task.route");
 const completeTask_route_1 = require("../modules/CompleteTask/completeTask.route");
+const spin_route_1 = require("../modules/Spin/spin.route");
 exports.router = (0, express_1.Router)();
 const routerItems = [
     {
@@ -23,6 +24,10 @@ const routerItems = [
     {
         path: "/task/complete",
         route: completeTask_route_1.TaskCompletedRoutes,
+    },
+    {
+        path: "/spin",
+        route: spin_route_1.SpinRoutes,
     },
 ];
 routerItems === null || routerItems === void 0 ? void 0 : routerItems.forEach((route) => {

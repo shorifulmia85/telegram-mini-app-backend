@@ -3,6 +3,7 @@ import { TelegramAuthRoutes } from "../modules/TelegramAuth/telegramAuth.route";
 import { ReferralRoutes } from "../modules/Referral/referral.route";
 import { TaskRoutes } from "../modules/Tasks/task.route";
 import { TaskCompletedRoutes } from "../modules/CompleteTask/completeTask.route";
+import { SpinRoutes } from "../modules/Spin/spin.route";
 
 export const router = Router();
 const routerItems = [
@@ -21,6 +22,10 @@ const routerItems = [
   {
     path: "/task/complete",
     route: TaskCompletedRoutes,
+  },
+  {
+    path: "/spin",
+    route: SpinRoutes,
   },
 ];
 

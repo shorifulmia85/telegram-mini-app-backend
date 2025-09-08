@@ -21,7 +21,7 @@ const referralUnlocked = (0, catchAsynce_1.catchAsync)((req, res) => __awaiter(v
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.StatusCodes.OK,
-        message: "Success",
+        message: "Unlocked success",
         data: result,
     });
 }));

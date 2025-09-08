@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SpinRoutes = void 0;
+const express_1 = require("express");
+const checkAuth_1 = require("../../middlewares/checkAuth");
+const telegramAuth_interface_1 = require("../TelegramAuth/telegramAuth.interface");
+const spin_controller_1 = require("./spin.controller");
+const validateRequest_1 = require("../../middlewares/validateRequest");
+const spin_validate_1 = require("./spin.validate");
+const router = (0, express_1.Router)();
+router.get("/", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.USER, telegramAuth_interface_1.UserRole.ADMIN, telegramAuth_interface_1.UserRole.SUPER_ADMIN), spin_controller_1.spinController.getAllSpin);
+router.post("/create", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.SUPER_ADMIN, telegramAuth_interface_1.UserRole.ADMIN, telegramAuth_interface_1.UserRole.USER), (0, validateRequest_1.validateRequest)(spin_validate_1.spinValidationSchema), spin_controller_1.spinController.createSpin);
+router.post("/spin-and-win", (0, checkAuth_1.checkAuth)(telegramAuth_interface_1.UserRole.USER), spin_controller_1.spinController.spinAndWin);
+exports.SpinRoutes = router;
